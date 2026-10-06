@@ -1,11 +1,31 @@
+using WeatherApp.Cities;
+
 namespace WeatherApp;
 
 internal static class Program
 {
-    private static async Task<int> Main()
-    {
-        await Console.Out.WriteLineAsync("WeatherApp started");
+    private static readonly string DefaultCitiesPath = Path.Combine(AppContext.BaseDirectory, "cities.txt");
 
-        return ExitCodes.Success;
+    private static async Task<int> Main(string[] args)
+    {
+        string citiesPath = args.Length > 0 ? args[0] : DefaultCitiesPath;
+        CityProvider cityProvider = new CityProvider(new FileCitySource(citiesPath));
+
+        try
+        {
+            IReadOnlyList<City> cities = await cityProvider.GetCitiesAsync();
+
+            foreach (City city in cities)
+            {
+                Console.WriteLine(city.Name);
+            }
+
+            return ExitCodes.Success;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Cannot read cities file '{citiesPath}': {ex.Message}");
+            return ExitCodes.Failure;
+        }
     }
 }
