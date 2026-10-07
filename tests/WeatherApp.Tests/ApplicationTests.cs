@@ -70,12 +70,14 @@ public sealed class ApplicationTests
     private static Application CreateApplication(TextWriter output, TextWriter errors, params string[] cityNames)
     {
         CityProvider cityProvider = new CityProvider(new StubCitySource(cityNames));
+        ProgressLog progressLog = new ProgressLog(TextWriter.Null);
         WeatherLoader weatherLoader = new WeatherLoader(
             new StubWeatherClient(),
             new RetryPolicy(new RetryOptions { MaxAttempts = 1 }),
+            progressLog,
             new LoaderOptions());
 
-        return new Application(cityProvider, weatherLoader, new TextWeatherReportWriter(output, errors));
+        return new Application(cityProvider, weatherLoader, new TextWeatherReportWriter(output, errors), progressLog);
     }
 
     private sealed class StubCitySource(IReadOnlyList<string> names) : ICitySource

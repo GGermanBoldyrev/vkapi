@@ -14,15 +14,17 @@ internal sealed class AppServices : IDisposable
 
     public AppServices(AppOptions options)
     {
+        ProgressLog progressLog = new ProgressLog(Console.Error);
+
         CityProvider cityProvider = new CityProvider(new FileCitySource(options.CitiesFilePath));
 
         WttrWeatherClient weatherClient = new WttrWeatherClient(_httpClient, options.WeatherApi);
         RetryPolicy retryPolicy = new RetryPolicy(options.Retry);
-        WeatherLoader weatherLoader = new WeatherLoader(weatherClient, retryPolicy, options.Loader);
+        WeatherLoader weatherLoader = new WeatherLoader(weatherClient, retryPolicy, progressLog, options.Loader);
 
         TextWeatherReportWriter reportWriter = new TextWeatherReportWriter(Console.Out, Console.Error);
 
-        Application = new Application(cityProvider, weatherLoader, reportWriter);
+        Application = new Application(cityProvider, weatherLoader, reportWriter, progressLog);
     }
 
     public Application Application { get; }

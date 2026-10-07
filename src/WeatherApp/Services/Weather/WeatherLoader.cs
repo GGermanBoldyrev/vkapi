@@ -5,7 +5,11 @@ using WeatherApp.Services.Common;
 
 namespace WeatherApp.Services.Weather;
 
-internal sealed class WeatherLoader(IWeatherClient weatherClient, RetryPolicy retryPolicy, LoaderOptions options)
+internal sealed class WeatherLoader(
+    IWeatherClient weatherClient,
+    RetryPolicy retryPolicy,
+    ProgressLog progressLog,
+    LoaderOptions options)
 {
     // Результаты идут в том же порядке, что и города. Ошибка одного города не мешает остальным.
     public async Task<IReadOnlyList<WeatherResult>> LoadAsync(
@@ -27,6 +31,8 @@ internal sealed class WeatherLoader(IWeatherClient weatherClient, RetryPolicy re
         {
             WeatherData weather = await retryPolicy.ExecuteAsync(
                 token => weatherClient.GetWeatherAsync(city, token),
+                (attempt, exception, delay) => progressLog.Detail(
+                    $"{city.Name}: attempt {attempt} failed ({exception.Message}), retrying in {delay.TotalSeconds:0.#} s"),
                 cancellationToken);
 
             return WeatherResult.Success(weather);

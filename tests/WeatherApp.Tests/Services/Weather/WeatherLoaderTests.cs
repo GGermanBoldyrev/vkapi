@@ -13,11 +13,12 @@ public sealed class WeatherLoaderTests
         [new City("Moscow"), new City("Vienna"), new City("Perm"), new City("Villach"), new City("Izhevsk")];
 
     private static readonly RetryPolicy NoRetries = new RetryPolicy(new RetryOptions { MaxAttempts = 1 });
+    private static readonly ProgressLog NoProgress = new ProgressLog(TextWriter.Null);
 
     [Fact]
     public async Task LoadAsync_ReturnsResultsInCityOrder()
     {
-        WeatherLoader loader = new WeatherLoader(new FakeWeatherClient(), NoRetries, new LoaderOptions { MaxParallelRequests = 3 });
+        WeatherLoader loader = new WeatherLoader(new FakeWeatherClient(), NoRetries, NoProgress, new LoaderOptions { MaxParallelRequests = 3 });
 
         IReadOnlyList<WeatherResult> results = await loader.LoadAsync(Cities);
 
@@ -28,7 +29,7 @@ public sealed class WeatherLoaderTests
     [Fact]
     public async Task LoadAsync_KeepsOtherCities_WhenOneFails()
     {
-        WeatherLoader loader = new WeatherLoader(new FakeWeatherClient(failingCity: "Perm"), NoRetries, new LoaderOptions { MaxParallelRequests = 3 });
+        WeatherLoader loader = new WeatherLoader(new FakeWeatherClient(failingCity: "Perm"), NoRetries, NoProgress, new LoaderOptions { MaxParallelRequests = 3 });
 
         IReadOnlyList<WeatherResult> results = await loader.LoadAsync(Cities);
 
@@ -41,7 +42,7 @@ public sealed class WeatherLoaderTests
     public async Task LoadAsync_DoesNotExceedParallelRequestLimit()
     {
         FakeWeatherClient client = new FakeWeatherClient();
-        WeatherLoader loader = new WeatherLoader(client, NoRetries, new LoaderOptions { MaxParallelRequests = 2 });
+        WeatherLoader loader = new WeatherLoader(client, NoRetries, NoProgress, new LoaderOptions { MaxParallelRequests = 2 });
 
         await loader.LoadAsync(Cities);
 

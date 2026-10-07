@@ -57,4 +57,23 @@ public sealed class RetryPolicyTests
 
         Assert.Equal(1, calls);
     }
+
+    [Fact]
+    public async Task ExecuteAsync_ReportsEachRetry_WithExponentialDelay()
+    {
+        RetryPolicy policy = new RetryPolicy(new RetryOptions { MaxAttempts = 4, Delay = TimeSpan.FromMilliseconds(1) });
+        List<(int Attempt, TimeSpan Delay)> retries = new List<(int Attempt, TimeSpan Delay)>();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => policy.ExecuteAsync<int>(
+            _ => throw new InvalidOperationException("failure"),
+            (attempt, _, delay) => retries.Add((attempt, delay))));
+
+        Assert.Equal(
+            [
+                (1, TimeSpan.FromMilliseconds(1)),
+                (2, TimeSpan.FromMilliseconds(2)),
+                (3, TimeSpan.FromMilliseconds(4)),
+            ],
+            retries);
+    }
 }
