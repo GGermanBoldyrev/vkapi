@@ -12,6 +12,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="WeatherApp.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="cities.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

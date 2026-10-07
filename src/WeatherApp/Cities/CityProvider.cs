@@ -9,7 +9,7 @@ internal sealed class CityProvider(ICitySource source)
 
         return names
             .Select(name => name.Trim())
-            .Where(name => name.Length > 0)
+            .Where(name => !string.IsNullOrEmpty(name))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Select(name => new City(name))
             .ToList();
