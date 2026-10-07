@@ -1,4 +1,6 @@
-namespace WeatherApp.Cities;
+using WeatherApp.Interfaces;
+
+namespace WeatherApp.Services.Cities;
 
 internal sealed class FileCitySource(string path) : ICitySource
 {

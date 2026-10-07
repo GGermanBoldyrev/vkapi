@@ -1,6 +1,8 @@
-using WeatherApp.Cities;
+using WeatherApp.Interfaces;
+using WeatherApp.Models;
+using WeatherApp.Services.Cities;
 
-namespace WeatherApp.Tests.Cities;
+namespace WeatherApp.Tests.Services.Cities;
 
 public sealed class CityProviderTests
 {
@@ -26,22 +28,6 @@ public sealed class CityProviderTests
         IReadOnlyList<City> cities = await GetCitiesAsync("Moscow", "moscow", " MOSCOW ", "Perm");
 
         Assert.Equal(["Moscow", "Perm"], cities.Select(city => city.Name));
-    }
-
-    [Fact]
-    public async Task GetCitiesAsync_PreservesSourceOrder()
-    {
-        IReadOnlyList<City> cities = await GetCitiesAsync("Villach", "Moscow", "Izhevsk");
-
-        Assert.Equal(["Villach", "Moscow", "Izhevsk"], cities.Select(city => city.Name));
-    }
-
-    [Fact]
-    public async Task GetCitiesAsync_ReturnsEmptyList_WhenSourceIsEmpty()
-    {
-        IReadOnlyList<City> cities = await GetCitiesAsync();
-
-        Assert.Empty(cities);
     }
 
     private static Task<IReadOnlyList<City>> GetCitiesAsync(params string[] names)

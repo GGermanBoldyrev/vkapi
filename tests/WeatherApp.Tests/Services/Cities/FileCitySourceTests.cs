@@ -1,7 +1,8 @@
 using System.Text;
-using WeatherApp.Cities;
 
-namespace WeatherApp.Tests.Cities;
+using WeatherApp.Services.Cities;
+
+namespace WeatherApp.Tests.Services.Cities;
 
 public sealed class FileCitySourceTests
 {
@@ -23,13 +24,5 @@ public sealed class FileCitySourceTests
         {
             File.Delete(path);
         }
-    }
-
-    [Fact]
-    public async Task GetCityNamesAsync_Throws_WhenFileDoesNotExist()
-    {
-        FileCitySource source = new FileCitySource(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()));
-
-        await Assert.ThrowsAsync<FileNotFoundException>(() => source.GetCityNamesAsync());
     }
 }

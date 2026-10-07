@@ -1,4 +1,7 @@
-namespace WeatherApp.Cities;
+using WeatherApp.Interfaces;
+using WeatherApp.Models;
+
+namespace WeatherApp.Services.Cities;
 
 internal sealed class CityProvider(ICitySource source)
 {

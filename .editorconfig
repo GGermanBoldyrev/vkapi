@@ -387,3 +387,12 @@ dotnet_naming_style.s_camelcase.required_suffix =
 dotnet_naming_style.s_camelcase.word_separator = 
 dotnet_naming_style.s_camelcase.capitalization = camel_case
 
+
+#### Отличия проекта от стандартного файла (dotnet new editorconfig) ####
+[*.cs]
+
+# Файлы заканчиваются переводом строки
+insert_final_newline = true
+
+# Полный синтаксис создания объектов: new Foo(), а не new()
+csharp_style_implicit_object_creation_when_type_is_apparent = false:suggestion
