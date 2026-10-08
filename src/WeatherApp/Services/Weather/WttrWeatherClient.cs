@@ -9,6 +9,9 @@ internal sealed class WttrWeatherClient(HttpClient httpClient, WeatherApiOptions
 {
     private const string JsonFormat = "j1";
 
+    // Особнность API - 500 и тело)
+    private const string CityNotFoundBody = "location not found";
+
     public async Task<WeatherData> GetWeatherAsync(City city, CancellationToken cancellationToken = default)
     {
         Uri uri = new Uri(options.BaseUrl, $"{Uri.EscapeDataString(city.Name)}?format={JsonFormat}");
@@ -23,6 +26,11 @@ internal sealed class WttrWeatherClient(HttpClient httpClient, WeatherApiOptions
 
             if (!response.IsSuccessStatusCode)
             {
+                if (body.StartsWith(CityNotFoundBody, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new CityNotFoundException();
+                }
+
                 throw new WeatherApiException($"wttr.in returned {(int)response.StatusCode}: {body.Trim()}");
             }
 

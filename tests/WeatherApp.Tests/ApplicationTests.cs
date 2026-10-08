@@ -60,7 +60,7 @@ public sealed class ApplicationTests
             ignoreLineEndingDifferences: true);
         Assert.Equal(
             """
-            Atlantis: failed to get weather (unknown city)
+            Atlantis: failed to get weather (City not found.)
 
             """,
             errors.ToString(),
@@ -104,7 +104,7 @@ public sealed class ApplicationTests
         {
             if (!Known.TryGetValue(city.Name, out (string Country, double Celsius) weather))
             {
-                throw new WeatherApiException("unknown city");
+                throw new CityNotFoundException();
             }
 
             return Task.FromResult(new WeatherData(city, new Country(weather.Country), new Temperature(weather.Celsius)));

@@ -12,7 +12,11 @@ public sealed class WeatherLoaderTests
     private static readonly IReadOnlyList<City> Cities =
         [new City("Moscow"), new City("Vienna"), new City("Perm"), new City("Villach"), new City("Izhevsk")];
 
+    private const int MaxAttempts = 3;
+
     private static readonly RetryPolicy NoRetries = new RetryPolicy(new RetryOptions { MaxAttempts = 1 });
+    private static readonly RetryPolicy WithRetries = new RetryPolicy(
+        new RetryOptions { MaxAttempts = MaxAttempts, Delay = TimeSpan.Zero });
     private static readonly ProgressLog NoProgress = new ProgressLog(TextWriter.Null);
 
     [Fact]
@@ -47,6 +51,42 @@ public sealed class WeatherLoaderTests
         await loader.LoadAsync(Cities);
 
         Assert.Equal(2, client.MaxConcurrentCalls);
+    }
+
+    [Fact]
+    public async Task LoadAsync_RetriesFailedRequest()
+    {
+        FailingWeatherClient client = new FailingWeatherClient(new WeatherApiException("service unavailable"));
+        WeatherLoader loader = new WeatherLoader(client, WithRetries, NoProgress, new LoaderOptions());
+
+        IReadOnlyList<WeatherResult> results = await loader.LoadAsync([new City("Perm")]);
+
+        Assert.Equal(MaxAttempts, client.Calls);
+        Assert.Equal("service unavailable", Assert.Single(results).Error);
+    }
+
+    [Fact]
+    public async Task LoadAsync_DoesNotRetry_WhenCityIsNotFound()
+    {
+        FailingWeatherClient client = new FailingWeatherClient(new CityNotFoundException());
+        WeatherLoader loader = new WeatherLoader(client, WithRetries, NoProgress, new LoaderOptions());
+
+        IReadOnlyList<WeatherResult> results = await loader.LoadAsync([new City("Atlantis")]);
+
+        Assert.Equal(1, client.Calls);
+        Assert.Equal("City not found.", Assert.Single(results).Error);
+    }
+
+    private sealed class FailingWeatherClient(Exception failure) : IWeatherClient
+    {
+        public int Calls { get; private set; }
+
+        public Task<WeatherData> GetWeatherAsync(City city, CancellationToken cancellationToken = default)
+        {
+            Calls++;
+
+            throw failure;
+        }
     }
 
     private sealed class FakeWeatherClient(string? failingCity = null) : IWeatherClient

@@ -7,6 +7,7 @@ internal sealed class RetryPolicy(RetryOptions options)
     // onRetry вызывается перед каждой паузой: номер неудачной попытки, ошибка и длительность паузы.
     public async Task<T> ExecuteAsync<T>(
         Func<CancellationToken, Task<T>> action,
+        Func<Exception, bool>? shouldRetry = null,
         Action<int, Exception, TimeSpan>? onRetry = null,
         CancellationToken cancellationToken = default)
     {
@@ -16,7 +17,9 @@ internal sealed class RetryPolicy(RetryOptions options)
             {
                 return await action(cancellationToken);
             }
-            catch (Exception ex) when (attempt < options.MaxAttempts && ex is not OperationCanceledException)
+            catch (Exception ex) when (attempt < options.MaxAttempts
+                                       && ex is not OperationCanceledException
+                                       && (shouldRetry is null || shouldRetry(ex)))
             {
                 TimeSpan delay = options.Delay * Math.Pow(2, attempt - 1);
 

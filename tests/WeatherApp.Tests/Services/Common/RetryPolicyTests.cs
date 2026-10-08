@@ -59,6 +59,23 @@ public sealed class RetryPolicyTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_DoesNotRetry_WhenShouldRetryRejectsError()
+    {
+        int calls = 0;
+
+        await Assert.ThrowsAsync<ArgumentException>(() => Policy.ExecuteAsync<int>(
+            _ =>
+            {
+                calls++;
+
+                throw new ArgumentException("permanent failure");
+            },
+            exception => exception is not ArgumentException));
+
+        Assert.Equal(1, calls);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_ReportsEachRetry_WithExponentialDelay()
     {
         RetryPolicy policy = new RetryPolicy(new RetryOptions { MaxAttempts = 4, Delay = TimeSpan.FromMilliseconds(1) });
@@ -66,7 +83,7 @@ public sealed class RetryPolicyTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => policy.ExecuteAsync<int>(
             _ => throw new InvalidOperationException("failure"),
-            (attempt, _, delay) => retries.Add((attempt, delay))));
+            onRetry: (attempt, _, delay) => retries.Add((attempt, delay))));
 
         Assert.Equal(
             [

@@ -1,4 +1,5 @@
 using WeatherApp.Configuration;
+using WeatherApp.Exceptions;
 using WeatherApp.Interfaces;
 using WeatherApp.Models;
 using WeatherApp.Services.Common;
@@ -31,6 +32,7 @@ internal sealed class WeatherLoader(
         {
             WeatherData weather = await retryPolicy.ExecuteAsync(
                 token => weatherClient.GetWeatherAsync(city, token),
+                ex => ex is not CityNotFoundException,
                 (attempt, exception, delay) => progressLog.Detail(
                     $"{city.Name}: attempt {attempt} failed ({exception.Message}), retrying in {delay.TotalSeconds:0.#} s"),
                 cancellationToken);

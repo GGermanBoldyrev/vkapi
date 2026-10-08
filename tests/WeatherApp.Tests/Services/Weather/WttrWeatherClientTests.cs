@@ -35,13 +35,26 @@ public sealed class WttrWeatherClientTests
     [Fact]
     public async Task GetWeatherAsync_Throws_WhenStatusIsNotSuccess()
     {
-        StubHandler handler = new StubHandler(_ => Task.FromResult(Respond(HttpStatusCode.InternalServerError, "location not found")));
+        StubHandler handler = new StubHandler(_ => Task.FromResult(Respond(HttpStatusCode.ServiceUnavailable, "upstream unavailable")));
         using HttpClient http = new HttpClient(handler);
         WttrWeatherClient client = new WttrWeatherClient(http, new WeatherApiOptions());
 
         WeatherApiException exception = await Assert.ThrowsAsync<WeatherApiException>(() => client.GetWeatherAsync(City));
 
-        Assert.Equal("wttr.in returned 500: location not found", exception.Message);
+        Assert.Equal("wttr.in returned 503: upstream unavailable", exception.Message);
+    }
+
+    // Оба текста — настоящие ответы wttr.in на неизвестный город: на первый запрос и на повторный.
+    [Theory]
+    [InlineData("location not found: upstream error: opencage: invalid response")]
+    [InlineData("location not found: location not found")]
+    public async Task GetWeatherAsync_ThrowsCityNotFound_WhenCityIsUnknown(string body)
+    {
+        StubHandler handler = new StubHandler(_ => Task.FromResult(Respond(HttpStatusCode.InternalServerError, body)));
+        using HttpClient http = new HttpClient(handler);
+        WttrWeatherClient client = new WttrWeatherClient(http, new WeatherApiOptions());
+
+        await Assert.ThrowsAsync<CityNotFoundException>(() => client.GetWeatherAsync(City));
     }
 
     [Fact]
