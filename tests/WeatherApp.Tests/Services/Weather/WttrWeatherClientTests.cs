@@ -74,6 +74,24 @@ public sealed class WttrWeatherClientTests
         Assert.Contains("did not respond", exception.Message);
     }
 
+    [Fact]
+    public async Task GetWeatherAsync_ThrowsOperationCanceled_WhenCallerCancels()
+    {
+        StubHandler handler = new StubHandler(async cancellationToken =>
+        {
+            await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+            return Respond(HttpStatusCode.OK, Body);
+        });
+        using HttpClient http = new HttpClient(handler);
+        WttrWeatherClient client = new WttrWeatherClient(http, new WeatherApiOptions());
+        using CancellationTokenSource cancellation = new CancellationTokenSource();
+
+        Task<WeatherData> request = client.GetWeatherAsync(City, cancellation.Token);
+        await cancellation.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => request);
+    }
+
     private static HttpResponseMessage Respond(HttpStatusCode status, string body)
     {
         return new HttpResponseMessage(status) { Content = new StringContent(body) };

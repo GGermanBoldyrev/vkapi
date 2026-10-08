@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 using WeatherApp.Configuration;
 using WeatherApp.Exceptions;
 using WeatherApp.Interfaces;
@@ -75,6 +77,28 @@ public sealed class WeatherLoaderTests
 
         Assert.Equal(1, client.Calls);
         Assert.Equal("City not found.", Assert.Single(results).Error);
+    }
+
+    [Fact]
+    public async Task LoadAsync_Throws_WhenCancelledDuringRequests()
+    {
+        WeatherLoader loader = new WeatherLoader(new HangingWeatherClient(), WithRetries, NoProgress, new LoaderOptions());
+        using CancellationTokenSource cancellation = new CancellationTokenSource();
+
+        Task<IReadOnlyList<WeatherResult>> loading = loader.LoadAsync(Cities, cancellation.Token);
+        await cancellation.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => loading);
+    }
+
+    private sealed class HangingWeatherClient : IWeatherClient
+    {
+        public async Task<WeatherData> GetWeatherAsync(City city, CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+
+            throw new UnreachableException();
+        }
     }
 
     private sealed class FailingWeatherClient(Exception failure) : IWeatherClient
